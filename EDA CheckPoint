@@ -1,0 +1,1130 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "**If you lost points on the last checkpoint you can get them back by responding to TA/IA feedback**  \n",
+    "\n",
+    "Update/change the relevant sections where you lost those points, make sure you respond on GitHub Issues to your TA/IA to call their attention to the changes you made here.\n",
+    "\n",
+    "Please update your Timeline... no battle plan survives contact with the enemy, so make sure we understand how your plans have changed."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# COGS 108 - EDA Checkpoint"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Names\n",
+    "\n",
+    "- Tony Bai\n",
+    "- Ryan Regala\n",
+    "- Jiwon Kim\n",
+    "- Colin Isidro\n",
+    "- Rambharath Saravanan"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Research Question"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Based on an anime's genre(s), number of episodes, studio(s) that animated it, platform(s) it is being streamed on, and its source material (manga, light novel, visual novel, etc.), can we predict its score on MyAnimeList, a platform that gives an anime a score by aggregating scores given by its users from 1-10"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Background and Prior Work"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "For our project, we want to look at multiple different qualities in anime and see if we can use that to predict the score of an anime on MyAnimeList. From our research, we know that MyAnimeList has the biggest data on anime with having the least amount of missing data. The same source mentions that there were no strict web scraping policies as of early 2024, but further research suggests the scraping the website wouldn't be allowed, yet we would be allowed to get data from their API that has similar data if we wanted. We also know a lot about how MyAnimeList calculates its weighted average anime scores from the previous projects. <a name=\"ref-2\"></a>[<sup>2</sup>](#ref-2) On top of that, we also found out that using a non-linear regression model would be more accurate than a linear one since their scores are also calculated on a non-linear formula.<a name=\"ref-1\"></a>[<sup>1</sup>](#ref-1)\n",
+    "\n",
+    "Another project suggests that multimodal data decreases the error in prediction models for MyAnimeList scores. <a name=\"ref-2\"></a>[<sup>2</sup>](#ref-2) So, our project could put that into consideration as well as the genre, episodes, liscensing platforms, and source material previously mentioned in the research question. A project also puts forth a good practice of checking the collinearity of the variables we are checking for.<a name=\"ref-1\"></a>[<sup>1</sup>](#ref-1)\n",
+    "\n",
+    "## Metis Project 2: Prediction Model on Anime Rating Score\n",
+    "In this project, the author tries to make a prediction model based on MyAnimeList scores. They first scraped the data from that website, created a collinearity heat map to remove highly collinear features. They then used multiple linear regression models and finalized with using the one that had the least amount of error (Polynomial). They found that anime based off manga, added as Favorite on MAL, and produced by Production I.G. showed a correlation with popular anime rating scores. Though, they also specified that MAL specifies that their anime scores are calculated on a non-linear formula while this prediction model was more linear. \n",
+    "\n",
+    "1. <a name=\"ref1\"></a> [^](#ref-1)Ting, K. S. (2021, December 16). Metis Project 2: Prediction Model on Anime Rating Score. Medium. https://medium.com/@sitingkoh1808/metis-project-2-prediction-model-on-anime-rating-score-65d9b5e3a6\n",
+    "\n",
+    "## Anime Popularity Prediction Before Huge Investments: a Multimodal Approach Using Deep Learning\n",
+    "This project aims to predict the popularity of an anime (based off of MAL scores) using multimodal text-image data. They used a 3 input deep neural network with the input of synopsis, main character descriptions, and main character portraits. They found that their model best worked with the multimodal data in their prediction of MAL ratings. Though, they say that the model could be improved with more RAM allocated to the analysis, allowing images to be encoded into more tokens.\n",
+    "\n",
+    "2. <a name=\"ref2\"></a> [^](#ref-2) Armenta-Segura, J., & Sidorov, G. (2024). Anime Popularity Prediction Before Huge Investments: a Multimodal Approach Using Deep Learning. arXiv preprint arXiv:2406.16961.\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Hypothesis\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Our hypothesis is that the more popular genres, more well known animation studios, and more well known streaming platforms will be strongly positively correlated with a higher score compared to less popular genres, animation studios, and streaming platforms; an anime's episode count will be positively correlated with its score; and the source material of an anime will have no correlation with its score. \n",
+    "\n",
+    "More popular genres, well known animation studios and streaming platforms, by virtue of being more popular well known, will have higher scores because they already have a fanbase that will inevitably be biased and think more highly of them. We think an anime's episode count will be positively correlated with its score because most of the highest rated animes on MyAnimeList have more episodes than the average episode count nowadays, which is 12. We think an anime's source material will have no correlation with its score because we think all the source materials have similar amounts of good and bad adaptations."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Data"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Data overview\n",
+    "\n",
+    "For each dataset include the following information\n",
+    "- Dataset #1\n",
+    "  - Dataset Name: Anime Dataset 2023\n",
+    "  - Link to the dataset: https://www.kaggle.com/datasets/dbdmobile/myanimelist-dataset/data\n",
+    "  - Number of observations: 24905\n",
+    "  - Number of variables: 24\n",
+    "\n",
+    "In Anime Dataset 2023, we have data on animes as recent as September 2022 (Summer 2022 season) and as far back as 1900s. There are a total of 24 columns in this dataset but the ones we care about are name, score, genres, episodes, studio, source, and licensors. \n",
+    "\n",
+    "Name contains the English pronouciation of names of every anime, score contains the aggregated score from each user that rated the animes, genres contains the genres for each anime (often multiple genres for each anime), studio contains the name of the animating studio(s) that did the work of adapting the show into anime (e.g. Bones, Madhouse, Toei Animations, etc.), source contains the source material that each anime was adapted from (anime original, manga, light novel, etc.), and licensors contains the platform(s) the anime was streamed on (e.g. Crunchyroll, Funimation, Bandai Entertainment, etc.). \n",
+    "\n",
+    "The first step of cleaning would be filter out all the animes in the dataset that doesn't have \"TV\" in the Type column since we want to only focus on animes that are aired as TV shows, having other types within our model (movies, OVAs ONAs, etc.) could skew our results since those are a different medium. In addition, there are a lot of missing data (marked as UNKNOWN) in the dataset which we can fill in ourselves using MyAnimeList's API, and if there are any UNKNOWN data after that we can remove because those data doesn't exist, the most common explanations would be either the anime is still airing (unknown episode count) or no one has ever scored the anime (unknown aggregate score)."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Anime Dataset 2023"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "import requests\n",
+    "import numpy as np\n",
+    "import time"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def scoreScraping(subset : pd.DataFrame):\n",
+    "    '''For reading in MyAnimeList scores using its API'''\n",
+    "    url = \"https://api.myanimelist.net/v2/anime/\"\n",
+    "    clientHeader = {'X-MAL-CLIENT-ID':'be63c0a5e8517ce10df18a744cbf9045'}\n",
+    "    for i in range(subset.shape[0]):\n",
+    "        row = subset.iloc[i]\n",
+    "\n",
+    "        if row.get('Score') == 'UNKNOWN': # if score is missing\n",
+    "            anime_id = row.get('anime_id')\n",
+    "            index = row.name\n",
+    "\n",
+    "            response = requests.get(url + str(anime_id) + '?fields=mean', headers=clientHeader)\n",
+    "            if response.status_code == 200: # if response is returned successfully\n",
+    "                json = response.json()\n",
+    "                if 'mean' in json: # if a score was read in\n",
+    "                    subset.loc[index, 'Score'] = json['mean']\n",
+    "\n",
+    "    return subset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def aniListScraping(dataset : pd.DataFrame):\n",
+    "    '''For reading in genres, episode count, studios, streaming website, and source off AniList API'''\n",
+    "    url = 'https://graphql.anilist.co'\n",
+    "    query = '''\n",
+    "    query ($idMal: Int!) { # Define which variables will be used in the query (id)\n",
+    "        Media (idMal: $idMal, type: ANIME) { # Insert our variables into the query arguments (id) (type: ANIME is hard-coded in the query)\n",
+    "            genres\n",
+    "            episodes\n",
+    "            studios{\n",
+    "                nodes{\n",
+    "                    name\n",
+    "                    isAnimationStudio\n",
+    "                }\n",
+    "            }   \n",
+    "            streamingEpisodes{\n",
+    "                site\n",
+    "            }\n",
+    "            source\n",
+    "        }\n",
+    "    }\n",
+    "    '''\n",
+    "    # get the subset of missing data and get the index of subset\n",
+    "    subset = dataset[(dataset.get('Genres') == 'UNKNOWN') | (dataset.get('Episodes') == 'UNKNOWN') | (dataset.get('Studios') == 'UNKNOWN') \n",
+    "                     | (dataset.get('Licensors') == 'UNKNOWN') | (dataset.get('Source') == 'Unknown')]\n",
+    "    indicies = subset.index\n",
+    "\n",
+    "    for index in indicies:\n",
+    "        entry = dataset.loc[index]\n",
+    "        variables = {'idMal': entry.get('anime_id').item()}\n",
+    "        response = requests.post(url, json={'query': query, 'variables': variables})\n",
+    "\n",
+    "        if response.status_code == 429: # if ratelimit was reached\n",
+    "            time.sleep(61)\n",
+    "            response = requests.post(url, json={'query': query, 'variables': variables})\n",
+    "\n",
+    "        if response.status_code == 200: # if reponse is returned successfully\n",
+    "            data = response.json()['data']['Media']\n",
+    "\n",
+    "            if entry.get('Genres') == 'UNKNOWN' and 'genres' in data:\n",
+    "                dataset.loc[index, 'Genres'] = ','.join(data['genres'])\n",
+    "            if entry.get('Episodes') == 'UNKNOWN' and 'episodes' in data:\n",
+    "                dataset.loc[index, 'Episodes'] = data['episodes']\n",
+    "            if entry.get('Studios') == 'UNKNOWN' and 'studios' in data:\n",
+    "                studios = data['studios']['nodes']\n",
+    "                cellEntry = []\n",
+    "                for studio in studios:\n",
+    "                    if studio['isAnimationStudio']:\n",
+    "                        cellEntry.append(studio['name'])\n",
+    "                dataset.loc[index, 'Studios'] = ','.join(cellEntry)\n",
+    "            if entry.get('Licensors') == 'UNKNOWN' and 'streamingEpisodes' in data:\n",
+    "                if len(data['streamingEpisodes']) != 0:\n",
+    "                    dataset.loc[index, 'Licensors'] = data['streamingEpisodes'][0]['site']\n",
+    "            if entry.get('Source') == 'Unknown' and 'source' in data:\n",
+    "                dataset.loc[index, 'Source'] = data['source']\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# import initial dataset\n",
+    "dataset = pd.read_csv('anime-dataset-2023.csv')\n",
+    "dataset = dataset[dataset.get('Type') == 'TV'].get(['anime_id', 'Name', 'Score', 'Genres', 'Episodes', 'Studios', 'Licensors', 'Source'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Because MyAnimeList's API forces a cooldown if it is accessed too many times in a short amount of time, we are forced to wait 5 minutes between each chunk of API requests"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "ranges = np.arange(500, 7597, 500)\n",
+    "ranges = np.append(ranges, 7597)\n",
+    "\n",
+    "print(f'Starting chunk 0')\n",
+    "dataset[ranges[0]+1:ranges[0+1]] = scoreScraping(dataset[ranges[0]+1:ranges[0+1]])\n",
+    "print(f'Finished chunk 0')\n",
+    "for i in range(len(ranges) - 1):\n",
+    "    print(f'Starting chunk {ranges[i]}')\n",
+    "    dataset[ranges[i]+1:ranges[i+1]] = scoreScraping(dataset[ranges[i]+1:ranges[i+1]])\n",
+    "    print(f'Finished chunk {ranges[i]}')\n",
+    "    print('Starting 5 min cooldown')\n",
+    "    time.sleep(300)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Because this one single cell took more than 1 hour, I will save the edited dataset as 'edited-anime-dataset.csv' so we won't have to do that ever again"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dataset.to_csv('edited-anime-dataset.csv', index=False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2807, 8)"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "# import edited dataset\n",
+    "editedset = pd.read_csv('edited-anime-dataset.csv')\n",
+    "# check how many unknown scores we have now\n",
+    "editedset[editedset.get('Score') == 'UNKNOWN'].shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Although we have run our function to call the MAL API to try and get the score, many of them still has that cell empty because no one has ever scored them. Since an anime's score is crucial in our model, we will remove the ones that have it missing because they are unhelpful"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(0, 8)"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "editedset = editedset[dataset.get('Score') != 'UNKNOWN']\n",
+    "editedset[editedset.get('Score') == 'UNKNOWN'].shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We will now use AniList's API to get any missing data in Genres, Episodes, Studios, Licensors, and Source since AniList's API is more sophisticated and allows us to get Licensors, a piece of information that we cannot get off of MyAnimeList's API"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "aniListScraping(editedset)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "This one function call also took more than an hour because AniList's API has a rate limit of 30 calls per minute, and if it is reached we get put on a 1 minute cooldown, so for timesaving we will also save this final dataset. After this we are free from getting information from APIs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "editedset.to_csv('final-anime-dataset.csv', index=False)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "finalset = pd.read_csv('final-anime-dataset.csv')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "(1732, 8)\n",
+      "(1732, 8)\n"
+     ]
+    },
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>anime_id</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Score</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Episodes</th>\n",
+       "      <th>Studios</th>\n",
+       "      <th>Licensors</th>\n",
+       "      <th>Source</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>6</th>\n",
+       "      <td>17</td>\n",
+       "      <td>Hungry Heart: Wild Striker</td>\n",
+       "      <td>7.55</td>\n",
+       "      <td>Comedy, Slice of Life, Sports</td>\n",
+       "      <td>52.0</td>\n",
+       "      <td>Nippon Animation</td>\n",
+       "      <td>UNKNOWN</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>12</th>\n",
+       "      <td>23</td>\n",
+       "      <td>Ring ni Kakero 1</td>\n",
+       "      <td>6.39</td>\n",
+       "      <td>Action, Sports</td>\n",
+       "      <td>12.0</td>\n",
+       "      <td>Toei Animation</td>\n",
+       "      <td>UNKNOWN</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>33</th>\n",
+       "      <td>62</td>\n",
+       "      <td>D.C.: Da Capo</td>\n",
+       "      <td>6.72</td>\n",
+       "      <td>Drama, Romance</td>\n",
+       "      <td>26.0</td>\n",
+       "      <td>feel., Zexcs</td>\n",
+       "      <td>UNKNOWN</td>\n",
+       "      <td>Visual novel</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>64</th>\n",
+       "      <td>102</td>\n",
+       "      <td>Aishiteruze Baby★★</td>\n",
+       "      <td>7.44</td>\n",
+       "      <td>Comedy, Drama, Romance</td>\n",
+       "      <td>26.0</td>\n",
+       "      <td>TMS Entertainment</td>\n",
+       "      <td>UNKNOWN</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>65</th>\n",
+       "      <td>103</td>\n",
+       "      <td>Akazukin Chacha</td>\n",
+       "      <td>7.49</td>\n",
+       "      <td>Adventure, Comedy, Fantasy, Romance</td>\n",
+       "      <td>74.0</td>\n",
+       "      <td>Gallop</td>\n",
+       "      <td>UNKNOWN</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "    anime_id                        Name  Score  \\\n",
+       "6         17  Hungry Heart: Wild Striker   7.55   \n",
+       "12        23            Ring ni Kakero 1   6.39   \n",
+       "33        62               D.C.: Da Capo   6.72   \n",
+       "64       102          Aishiteruze Baby★★   7.44   \n",
+       "65       103             Akazukin Chacha   7.49   \n",
+       "\n",
+       "                                 Genres  Episodes            Studios  \\\n",
+       "6         Comedy, Slice of Life, Sports      52.0   Nippon Animation   \n",
+       "12                       Action, Sports      12.0     Toei Animation   \n",
+       "33                       Drama, Romance      26.0       feel., Zexcs   \n",
+       "64               Comedy, Drama, Romance      26.0  TMS Entertainment   \n",
+       "65  Adventure, Comedy, Fantasy, Romance      74.0             Gallop   \n",
+       "\n",
+       "   Licensors        Source  \n",
+       "6    UNKNOWN         Manga  \n",
+       "12   UNKNOWN         Manga  \n",
+       "33   UNKNOWN  Visual novel  \n",
+       "64   UNKNOWN         Manga  \n",
+       "65   UNKNOWN         Manga  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "print(finalset[(finalset.get('Genres') == 'UNKNOWN') | (finalset.get('Episodes') == 'UNKNOWN') | (finalset.get('Studios') == 'UNKNOWN') | \n",
+    "                     (finalset.get('Licensors') == 'UNKNOWN')].shape)\n",
+    "print(finalset[(finalset.get('Licensors') == 'UNKNOWN')].shape)\n",
+    "finalset[(finalset.get('Licensors') == 'UNKNOWN')].head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "after scraping information off AniList's API we still have a lot of unknown information, all of them having at least the Licensors column missing, most likely because they were aired on TV before streaming platforms like Crunchyroll were a thing so these animes aren't on any streaming platforms. We are free to remove these animes since that information simply doesn't exist"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(3058, 8)"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "finalset = finalset[(finalset.get('Licensors') != 'UNKNOWN')]\n",
+    "finalset.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "anime_id      0\n",
+      "Name          0\n",
+      "Score         0\n",
+      "Genres        4\n",
+      "Episodes      7\n",
+      "Studios      16\n",
+      "Licensors     0\n",
+      "Source        0\n",
+      "dtype: int64\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(finalset.isnull().sum(axis=0))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Looks like we also got some nulls from the function call"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>anime_id</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Score</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Episodes</th>\n",
+       "      <th>Studios</th>\n",
+       "      <th>Licensors</th>\n",
+       "      <th>Source</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>1968</th>\n",
+       "      <td>8753</td>\n",
+       "      <td>Ultraman Kids: Haha wo Tazunete 3000-man Kounen</td>\n",
+       "      <td>6.09</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>26.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Mill Creek Entertainment</td>\n",
+       "      <td>Other</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2399</th>\n",
+       "      <td>15547</td>\n",
+       "      <td>Cross Fight B-Daman eS</td>\n",
+       "      <td>6.45</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>52.0</td>\n",
+       "      <td>SynergySP</td>\n",
+       "      <td>ADK Emotions NY</td>\n",
+       "      <td>Unknown</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2685</th>\n",
+       "      <td>21835</td>\n",
+       "      <td>Majin Bone</td>\n",
+       "      <td>6.62</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>52.0</td>\n",
+       "      <td>Toei Animation</td>\n",
+       "      <td>Crunchyroll</td>\n",
+       "      <td>Game</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>2731</th>\n",
+       "      <td>22735</td>\n",
+       "      <td>Oreca Battle</td>\n",
+       "      <td>5.86</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>51.0</td>\n",
+       "      <td>Xebec, OLM</td>\n",
+       "      <td>Crunchyroll</td>\n",
+       "      <td>Game</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      anime_id                                             Name  Score Genres  \\\n",
+       "1968      8753  Ultraman Kids: Haha wo Tazunete 3000-man Kounen   6.09    NaN   \n",
+       "2399     15547                           Cross Fight B-Daman eS   6.45    NaN   \n",
+       "2685     21835                                       Majin Bone   6.62    NaN   \n",
+       "2731     22735                                     Oreca Battle   5.86    NaN   \n",
+       "\n",
+       "      Episodes         Studios                 Licensors   Source  \n",
+       "1968      26.0             NaN  Mill Creek Entertainment    Other  \n",
+       "2399      52.0       SynergySP           ADK Emotions NY  Unknown  \n",
+       "2685      52.0  Toei Animation               Crunchyroll     Game  \n",
+       "2731      51.0      Xebec, OLM               Crunchyroll     Game  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "finalset[finalset.get('Genres').isnull()]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "searching for these animes on AniList, they simply have no genres listed, one reason as to why might be because they are all children's shows. Since we want genres in our analysis, we will drop these animes because they are unhelpful for our prediction"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>anime_id</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Score</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Episodes</th>\n",
+       "      <th>Studios</th>\n",
+       "      <th>Licensors</th>\n",
+       "      <th>Source</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>10</th>\n",
+       "      <td>21</td>\n",
+       "      <td>One Piece</td>\n",
+       "      <td>8.69</td>\n",
+       "      <td>Action, Adventure, Fantasy</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Toei Animation</td>\n",
+       "      <td>Funimation, 4Kids Entertainment</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>159</th>\n",
+       "      <td>235</td>\n",
+       "      <td>Detective Conan</td>\n",
+       "      <td>8.17</td>\n",
+       "      <td>Adventure, Comedy, Mystery</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>TMS Entertainment</td>\n",
+       "      <td>Funimation, Crunchyroll</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>522</th>\n",
+       "      <td>966</td>\n",
+       "      <td>Crayon Shin-chan</td>\n",
+       "      <td>7.77</td>\n",
+       "      <td>Comedy, Ecchi</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Shin-Ei Animation</td>\n",
+       "      <td>Funimation</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1488</th>\n",
+       "      <td>4459</td>\n",
+       "      <td>Ojarumaru</td>\n",
+       "      <td>6.32</td>\n",
+       "      <td>Adventure, Award Winning, Comedy, Fantasy</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Gallop</td>\n",
+       "      <td>Enoki Films</td>\n",
+       "      <td>Original</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1732</th>\n",
+       "      <td>6149</td>\n",
+       "      <td>Chibi Maruko-chan (1995)</td>\n",
+       "      <td>7.27</td>\n",
+       "      <td>Comedy, Slice of Life</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Nippon Animation</td>\n",
+       "      <td>Crunchyroll</td>\n",
+       "      <td>Manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>3172</th>\n",
+       "      <td>32353</td>\n",
+       "      <td>Bonobono (TV 2016)</td>\n",
+       "      <td>6.33</td>\n",
+       "      <td>Comedy, Slice of Life</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Eiken</td>\n",
+       "      <td>Crunchyroll</td>\n",
+       "      <td>4-koma manga</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>4451</th>\n",
+       "      <td>50250</td>\n",
+       "      <td>Chiikawa</td>\n",
+       "      <td>5.68</td>\n",
+       "      <td>Comedy</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Doga Kobo</td>\n",
+       "      <td>Sentai Filmworks</td>\n",
+       "      <td>Web manga</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      anime_id                      Name  Score  \\\n",
+       "10          21                 One Piece   8.69   \n",
+       "159        235           Detective Conan   8.17   \n",
+       "522        966          Crayon Shin-chan   7.77   \n",
+       "1488      4459                 Ojarumaru   6.32   \n",
+       "1732      6149  Chibi Maruko-chan (1995)   7.27   \n",
+       "3172     32353        Bonobono (TV 2016)   6.33   \n",
+       "4451     50250                  Chiikawa   5.68   \n",
+       "\n",
+       "                                         Genres  Episodes            Studios  \\\n",
+       "10                   Action, Adventure, Fantasy       NaN     Toei Animation   \n",
+       "159                  Adventure, Comedy, Mystery       NaN  TMS Entertainment   \n",
+       "522                               Comedy, Ecchi       NaN  Shin-Ei Animation   \n",
+       "1488  Adventure, Award Winning, Comedy, Fantasy       NaN             Gallop   \n",
+       "1732                      Comedy, Slice of Life       NaN   Nippon Animation   \n",
+       "3172                      Comedy, Slice of Life       NaN              Eiken   \n",
+       "4451                                     Comedy       NaN          Doga Kobo   \n",
+       "\n",
+       "                            Licensors        Source  \n",
+       "10    Funimation, 4Kids Entertainment         Manga  \n",
+       "159           Funimation, Crunchyroll         Manga  \n",
+       "522                        Funimation         Manga  \n",
+       "1488                      Enoki Films      Original  \n",
+       "1732                      Crunchyroll         Manga  \n",
+       "3172                      Crunchyroll  4-koma manga  \n",
+       "4451                 Sentai Filmworks     Web manga  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "finalset[finalset.get('Episodes').isnull()]"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "these animes are still airing, so it makes sense that they don't have a concrete episode count. Since we want episode counts in our analysis, we will need to drop these animes"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>anime_id</th>\n",
+       "      <th>Name</th>\n",
+       "      <th>Score</th>\n",
+       "      <th>Genres</th>\n",
+       "      <th>Episodes</th>\n",
+       "      <th>Studios</th>\n",
+       "      <th>Licensors</th>\n",
+       "      <th>Source</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>1223</th>\n",
+       "      <td>3202</td>\n",
+       "      <td>Daisuki! Hello Kitty</td>\n",
+       "      <td>6.27</td>\n",
+       "      <td>Fantasy</td>\n",
+       "      <td>26.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>ADV Films</td>\n",
+       "      <td>Original</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1298</th>\n",
+       "      <td>3519</td>\n",
+       "      <td>Garakuta-doori no Stain</td>\n",
+       "      <td>6.37</td>\n",
+       "      <td>Award Winning, Comedy</td>\n",
+       "      <td>13.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Funimation</td>\n",
+       "      <td>Unknown</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1394</th>\n",
+       "      <td>3880</td>\n",
+       "      <td>Makyou Densetsu Acrobunch</td>\n",
+       "      <td>5.90</td>\n",
+       "      <td>Sci-Fi</td>\n",
+       "      <td>24.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Discotek Media</td>\n",
+       "      <td>Original</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1416</th>\n",
+       "      <td>4025</td>\n",
+       "      <td>Asobou! Hello Kitty</td>\n",
+       "      <td>5.88</td>\n",
+       "      <td>Adventure, Fantasy</td>\n",
+       "      <td>26.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>ADV Films</td>\n",
+       "      <td>Unknown</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>1467</th>\n",
+       "      <td>4244</td>\n",
+       "      <td>Ginga Shippuu Sasuraiger</td>\n",
+       "      <td>6.40</td>\n",
+       "      <td>Action, Adventure</td>\n",
+       "      <td>43.0</td>\n",
+       "      <td>NaN</td>\n",
+       "      <td>Discotek Media</td>\n",
+       "      <td>Original</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "      anime_id                       Name  Score                 Genres  \\\n",
+       "1223      3202       Daisuki! Hello Kitty   6.27                Fantasy   \n",
+       "1298      3519    Garakuta-doori no Stain   6.37  Award Winning, Comedy   \n",
+       "1394      3880  Makyou Densetsu Acrobunch   5.90                 Sci-Fi   \n",
+       "1416      4025        Asobou! Hello Kitty   5.88     Adventure, Fantasy   \n",
+       "1467      4244   Ginga Shippuu Sasuraiger   6.40      Action, Adventure   \n",
+       "\n",
+       "      Episodes Studios       Licensors    Source  \n",
+       "1223      26.0     NaN       ADV Films  Original  \n",
+       "1298      13.0     NaN      Funimation   Unknown  \n",
+       "1394      24.0     NaN  Discotek Media  Original  \n",
+       "1416      26.0     NaN       ADV Films   Unknown  \n",
+       "1467      43.0     NaN  Discotek Media  Original  "
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "finalset[finalset.get('Studios').isnull()].head()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "searching for these animes on AniList, they either have no studios listed, or only have producers instead of the traditional animation studios we want. We are free to drop these animes as well"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(3032, 8)"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "finalset = finalset.dropna()\n",
+    "finalset.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Results\n",
+    "\n",
+    "## Exploratory Data Analysis\n",
+    "\n",
+    "Carry out whatever EDA you need to for your project.  Because every project will be different we can't really give you much of a template at this point. But please make sure you describe the what and why in text here as well as providing interpretation of results and context."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Section 1 of EDA - please give it a better title than this\n",
+    "\n",
+    "Some more words and stuff.  Remember notebooks work best if you interleave the code that generates a result with properly annotate figures and text that puts these results into context."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## YOUR CODE HERE\n",
+    "## FEEL FREE TO ADD MULTIPLE CELLS PER SECTION"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Section 2 of EDA if you need it  - please give it a better title than this\n",
+    "\n",
+    "Some more words and stuff.  Remember notebooks work best if you interleave the code that generates a result with properly annotate figures and text that puts these results into context."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "## YOUR CODE HERE\n",
+    "## FEEL FREE TO ADD MULTIPLE CELLS PER SECTION"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Ethics & Privacy"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "We got our data from Kaggle, which ranks the animes off of MyAnimeList.com. There is privacy between the data because we are going through the anonymous opinions of viewers on show popularity. However, there is potential bias because the genres of anime can depend on the viewer.\n",
+    "For instance, if the most common shows are shonen, then there could be higher-rated animes on MyAnimeList that belong to different genres, hence underrepresenting other types of anime.\n",
+    "One way to detect these biases throughout the project is by making sure the data we collect isn’t invasive to any personal information of anybody.\n",
+    "One problem that can affect our data analysis is that the ratings might be skewed towards popular genres, which impacts the fairness of rankings. To handle this issue, we can analyze the distribution of genres in the dataset to check for any disproportion.\n",
+    "1. We should Calculate the distribution of anime genres in the dataset. We can do this by visualizing the distribution through bar charts, and compare the genres.\n",
+    "2. Rate the analysis by Genre. Segment the data by genre, and compute the average ratings for each. By doingso, we can identify any genres with significantly higher or lower ratings, which could be overrepresented.\n",
+    "3. Check if there is a correlation between popularity and ratings. This can be done by examining the relationship between the two, and checking if highly popular anime genres have higher ratings.\n",
+    "4. Ensure the sample of anime included in the dataset is representative of the full range of genres. If certain genres are underrepresented, consider stratified sampling methods to balance the dataset.\n",
+    "5. Check for Bias through statistical testing to check for significant differences in ratings across genres.\n",
+    "6. Mitigate any Bias through weighing ratings by genre representation to balance their impact. Alternatively, we could separate rankings for each genre to avoid cross-genre comparison bias.\n",
+    "7. Clearly document any biases detected and the steps taken to address them. Ensure transparency by explaining how the data was sourced and any limitations it might have."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Team Expectations "
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "* *We will use Discord as our main form of communication, and a reasonable response time is a day as we are busy uni students that have our own schedules*\n",
+    "* *We will meet virtually once a week over Discord call*\n",
+    "* *Decision making will be unanimous*\n",
+    "\n",
+    "Tentative Project Responsibility\n",
+    "* *Tony will work on wrangling the data and modeling*\n",
+    "* *Ryan will work on discussing Ethics & Privacy*\n",
+    "* *Colin will work on dicussing similar works done prior*\n",
+    "* *Jiwon and Rambharath will work on EDA*"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Project Timeline Proposal"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "| Meeting Date  | Meeting Time| Completed Before Meeting  | Discuss at Meeting |\n",
+    "|---|---|---|---|\n",
+    "| 1/19  |  4:30 PM | Read & Think about COGS 108 expectations; brainstorm topics/questions  |  Use Discord to call about topics to brainstorm | \n",
+    "| 2/5  |  7:00 PM |  Decide on the topic; Search for datasets on Kaggle | Draft project proposal, have everyone contribute to writing the proposal | \n",
+    "| 2/9  | 10:30 AM  | Edit, finalize, and submit proposal | Discuss Wrangling and possible analytical approaches; Assign group members to lead each specific part  |\n",
+    "| 2/16  | 3 PM  | Import & Wrangle Data; EDA (AnimeList Prediction) | Review/Edit wrangling/EDA; Discuss Analysis Plan   |\n",
+    "| 2/23  | 3 PM  | Finalize wrangling/EDA; Begin Analysis (Anime Prediction Analysis) | Discuss/edit Predictions Analysis; Complete project check-in |\n",
+    "| 3/2   | 3 PM  | Complete analysis; Draft results/conclusion/discussion (AnimeList on predictions)| Discuss/edit full project |\n",
+    "| 3/9   | 3 PM  | Get project around 90% done | Discuss final changes we want to make |\n",
+    "| 3/16  | 3 PM  | N/A | Discuss last minute changes before turning the project in |"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.7"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
